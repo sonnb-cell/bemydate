@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Be My Date? (Perfect Alignment)</title>
+    <style>
+        * {
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #fce4ec;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            gap: 30px; 
+            padding: 20px;
+        }
+
+        .question-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: fit-content; 
+            max-width: 90vw; 
+            min-width: 350px;
+            text-align: center;
+            border: 2px solid #f8bbd0;
+            z-index: 100;
+        }
+
+        .action-container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 40px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px; 
+            border: 2px dashed #ff80ab;
+            min-height: 150px;
+            transition: gap 0.2s ease, background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        h1 {
+            color: #d81b60;
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.4;
+        }
+
+        button {
+            padding: 15px 35px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            min-width: 120px;
+            outline: none;
+            position: relative;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        #yesBtn:hover {
+            transform: scale(calc(var(--current-scale, 1) * 1.1)) !important;
+        }
+
+        #noBtn:not(.moving):hover {
+            transform: scale(calc(var(--current-scale, 1) * 1.1)) !important;
+        }
+
+        #yesBtn {
+            background-color: #4caf50;
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            z-index: 10;
+        }
+
+        #noBtn {
+            background-color: #f44336;
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+            z-index: 5;
+        }
+
+        .moving {
+            position: fixed !important;
+            transition: none !important; 
+            z-index: 9999 !important;
+        }
+        
+        .moving.smooth {
+            transition: all 0.2s ease-out !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="question-container">
+        <h1 id="questionText">Cậu có muốn đi cafe với mình không? ❤️</h1>
+    </div>
+
+    <div class="action-container" id="btnBox">
+        <button id="yesBtn" style="--current-scale: 1;">Có ạ</button>
+        <button id="noBtn" style="--current-scale: 1;">Đíu nhé</button>
+    </div>
+
+    <script>
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const questionText = document.getElementById('questionText');
+        const btnBox = document.getElementById('btnBox');
+
+        let noCount = 0;
+        let yesScale = 1;
+        let noScale = 1;
+        const baseGap = 20;
+
+        const messages = [
+            "Cậu chắc chưa? 🤨",
+            "Thật luôn á?? Nghĩ kĩ đi nha! 🧐",
+            "Đừng có phũ với tớ thế mà... 🥺",
+            "Tớ khóc thật đấy đừng đùa... 😭",
+            "Cho cậu suy nghĩ lại lần cuối đấy! 😤",
+            "Dỗi rồi, bắt được nút Không thì cho từ chối! 🏃‍♂️",
+            "Vẫn bấm 'Không' à? Còn lâu nhé, lêu lêu! 👻"
+        ];
+
+        function hideActionBox() {
+            btnBox.style.background = "none";
+            btnBox.style.border = "none";
+            btnBox.style.boxShadow = "none";
+        }
+
+        function updateScale(btn, scaleValue) {
+            btn.style.transform = `scale(${scaleValue})`;
+            btn.style.setProperty('--current-scale', scaleValue);
+        }
+
+        noBtn.addEventListener('click', () => {
+            if (noCount >= 5) {
+                teleportButton();
+                return; 
+            }
+
+            noCount++;
+            if (noCount === 1) hideActionBox();
+
+            yesScale += 0.5;
+            updateScale(yesBtn, yesScale);
+
+            const estimatedButtonWidth = 110; 
+            const newGap = baseGap + (estimatedButtonWidth * (yesScale - 1)) / 1.5; 
+            
+            if (noCount < 5) btnBox.style.gap = `${newGap}px`;
+
+            noScale -= 0.15;
+            if (noScale < 0.2) noScale = 0.2;
+            updateScale(noBtn, noScale);
+
+            let msgIndex = Math.min(noCount - 1, messages.length - 1);
+            questionText.innerText = messages[msgIndex];
+
+            if (noCount === 5) {
+                // Tạm tắt transition để lấy tọa độ tĩnh tuyệt đối
+                yesBtn.style.transition = 'none';
+                const rect = noBtn.getBoundingClientRect();
+                
+                noBtn.style.left = rect.left + 'px';
+                noBtn.style.top = rect.top + 'px';
+                noBtn.style.margin = '0';
+                
+                noBtn.classList.add('moving');
+                noBtn.setAttribute('tabindex', '-1');
+                
+                noScale = 1;
+                updateScale(noBtn, noScale);
+
+                setTimeout(() => {
+                    yesBtn.style.transition = 'all 0.2s ease';
+                    noBtn.classList.add('smooth');
+                }, 50);
+
+                btnBox.style.gap = `${baseGap}px`;
+            }
+        });
+
+        noBtn.addEventListener('mouseover', () => {
+            if (noBtn.classList.contains('moving')) {
+                teleportButton();
+            }
+        });
+
+        function teleportButton() {
+            const padding = 80; 
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - padding);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - padding);
+            noBtn.style.left = `${x}px`;
+            noBtn.style.top = `${y}px`;
+        }
+
+        yesBtn.addEventListener('click', () => {
+            hideActionBox();
+            questionText.innerText = "Đợi đó mình qua đón liền nha! 💖";
+            
+            setTimeout(() => {
+                btnBox.style.display = 'none';
+                noBtn.style.display = 'none';
+            }, 300);
+
+            document.body.style.backgroundColor = "#f06292";
+            questionText.style.transform = "scale(1.2)";
+            document.querySelector('.question-container').style.borderColor = "#d81b60";
+        });
+    </script>
+</body>
+</html>
